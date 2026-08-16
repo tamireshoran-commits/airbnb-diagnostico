@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Diagnostico de Anuncio Airbnb</title>
+<style>
+  :root {
+    --bg: #F5F3FA;
+    --panel: #FFFFFF;
+    --panel-2: #F0ECF9;
+    --border: #DFD6EE;
+    --text: #2B1B42;
+    --text-dim: #756B87;
+    --accent: #5B0FB0;
+    --accent-2: #6EC7C2;
+    --purple-mid: #8B3FD1;
+    --warn: #d99a2b;
+    --good: #3FA6A0;
+    --bad: #d1483f;
+    --font-display: 'Georgia', 'Iowan Old Style', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.5;
+  }
+  header {
+    padding: 40px 24px 24px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  header .eyebrow {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  header h1 {
+    font-family: var(--font-display);
+    font-size: 34px;
+    margin: 8px 0 6px;
+    font-weight: 700;
+  }
+  header p {
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0;
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin: 0 0 16px;
+  }
+  .row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  input[type="text"], input[type="url"], input[type="number"], textarea {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    width: 100%;
+  }
+  textarea { min-height: 100px; resize: vertical; }
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .field { margin-bottom: 14px; }
+  .field-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  button {
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 11px 18px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .url-row { display: flex; gap: 10px; }
+  .url-row input { flex: 1; }
+  .hint {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+  .status {
+    font-size: 13px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.error { background: rgba(209,72,63,0.10); color: #a8342c; border: 1px solid rgba(209,72,63,0.3); }
+  .status.ok { background: rgba(63,166,160,0.12); color: #2b7f79; border: 1px solid rgba(63,166,160,0.3); }
+
+  #resultados { display: none; }
+
+  .resultados-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 720px) {
+    .resultados-grid { grid-template-columns: 1fr; }
+  }
+
+  .metric {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .metric .num {
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .metric .label { color: var(--text-dim); font-size: 14px; }
+
+  ul.pontos { list-style: none; padding: 0; margin: 0; }
+  ul.pontos li {
+    padding: 8px 0 8px 26px;
+    position: relative;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  ul.pontos li:last-child { border-bottom: none; }
+  ul.pontos li.bom::before { content: "✓"; position: absolute; left: 0; color: var(--good); font-weight: 700; }
+  ul.pontos li.melhorar::before { content: "!"; position: absolute; left: 2px; color: var(--warn); font-weight: 700; }
+
+  .badge-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-pill.sim { background: rgba(63,166,160,0.15); color: var(--good); }
+  .badge-pill.nao { background: rgba(209,72,63,0.15); color: var(--bad); }
+  .badge-pill.indefinido { background: rgba(240,183,58,0.15); color: var(--warn); }
+
+  .criterio-linha {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .criterio-linha:last-child { border-bottom: none; }
+  .criterio-linha .val { color: var(--text-dim); }
+
+  ol.oficiais { padding-left: 18px; font-size: 13px; color: var(--text-dim); }
+  ol.oficiais li { margin-bottom: 6px; }
+
+  footer {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">EasyRent · Ferramenta interna</div>
+  <h1>Diagnóstico de anúncio</h1>
+  <p>Analise, compare e descubra onde melhorar. Cole o link do seu anúncio para preencher os dados automaticamente e veja como sua propriedade se posiciona em relação a outros imóveis.</p>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>1. Buscar o anuncio</h2>
+    <div class="url-row">
+      <input type="url" id="urlInput" placeholder="https://www.airbnb.com.br/rooms/..." />
+      <button id="btnBuscar">Buscar automaticamente</button>
+    </div>
+    <div id="statusBusca" class="status"></div>
+  </div>
+
+  <div id="topoAnuncio" style="display:none;" class="card">
+    <div style="display:flex; gap:16px; align-items:center;">
+      <img id="fotoPrincipal" src="" style="width:120px; height:120px; object-fit:cover; border-radius:8px; flex-shrink:0; display:none;" />
+      <div style="flex:1;">
+        <div class="hint" style="margin-bottom:4px;">Anuncio encontrado</div>
+        <div id="tituloAnuncio" style="font-family:var(--font-display); font-size:22px; font-weight:700;"></div>
+        <button id="btnSugerirTitulos" class="secondary" style="margin-top:10px; font-size:13px; padding:8px 14px;">Dê ideias de títulos melhores (até 50 caracteres)</button>
+        <div id="statusTitulos" class="status"></div>
+        <div id="resultadoTitulos" style="margin-top:10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. Dados do anuncio</h2>
+    <div class="field-2col">
+      <div class="field">
+        <label for="nota">Nota geral atual (ex: 4.76)</label>
+        <input type="text" id="nota" placeholder="4.76" />
+      </div>
+      <div class="field">
+        <label for="numAvaliacoes">Numero de avaliacoes</label>
+        <input type="number" id="numAvaliacoes" placeholder="18" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="numFotos">Numero de fotos no anuncio (conte na galeria)</label>
+      <input type="number" id="numFotos" placeholder="24" />
+    </div>
+    <div class="field">
+      <label for="descricao">Texto da descricao completo (cole exatamente como aparece no anuncio, incluindo os titulos "O espaco", "Acesso do hospede", "Outras observacoes" se existirem)</label>
+      <textarea id="descricao" placeholder="Cole aqui a descricao completa do anuncio, do jeito que aparece na pagina..."></textarea>
+      <div class="hint">A busca automatica ja tenta trazer isso pronto. Se for colar manualmente, mantenha os titulos das secoes em linhas separadas, e a ferramenta separa sozinha em: Descricao do anuncio, Sua propriedade, Acesso do hospede, Interacao com os hospedes e Outras informacoes importantes.</div>
+    </div>
+
+    <div class="field">
+      <label>Notas por categoria (opcional, deixe em branco se nao souber)</label>
+      <div class="field-2col">
+        <div>
+          <label style="margin-top:0;">Limpeza</label>
+          <input type="text" id="cat_limpeza" placeholder="ex: 4.9" />
+        </div>
+        <div>
+          <label style="margin-top:0;">Exatidao do anuncio</label>
+          <input type="text" id="cat_exatidao" placeholder="ex: 4.8" />
+        </div>
+        <div>
+          <label style="margin-top:0;">Check-in</label>
+          <input type="text" id="cat_checkin" placeholder="ex: 4.8" />
+        </div>
+        <div>
+          <label style="margin-top:0;">Comunicacao</label>
+          <input type="text" id="cat_comunicacao" placeholder="ex: 4.9" />
+        </div>
+        <div>
+          <label style="margin-top:0;">Localizacao</label>
+          <input type="text" id="cat_localizacao" placeholder="ex: 4.8" />
+        </div>
+        <div>
+          <label style="margin-top:0;">Custo-beneficio</label>
+          <input type="text" id="cat_custo_beneficio" placeholder="ex: 4.9" />
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="meta">Meta de nota geral</label>
+      <input type="text" id="meta" value="4.85" />
+    </div>
+
+    <button id="btnAnalisar">Analisar com IA</button>
+    <div id="statusAnalise" class="status"></div>
+  </div>
+
+  <div id="resultados">
+
+    <div class="resultados-grid">
+      <div class="card">
+        <h2>Fotos</h2>
+        <div id="blocoFotos"></div>
+      </div>
+
+      <div class="card">
+        <h2>Avaliacoes necessarias para a meta</h2>
+        <div id="blocoAvaliacoes"></div>
+      </div>
+    </div>
+
+    <div class="resultados-grid">
+      <div class="card">
+        <h2>Selo Preferido dos Hospedes</h2>
+        <div id="blocoSelo"></div>
+      </div>
+
+      <div class="card">
+        <h2>Descricao</h2>
+        <div id="blocoDescricao"></div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  Diagnostico baseado nos criterios publicos divulgados pelo Airbnb (artigo de ajuda "Como funciona o selo Preferido dos Hospedes"). Criterios internos (cancelamento, casos de suporte, comunicacao dentro do app) nao sao publicos e precisam ser conferidos no painel do anfitriao.
+</footer>
+
+<script>
+const API_BASE = window.location.origin;
+
+const el = (id) => document.getElementById(id);
+
+function showStatus(node, msg, type) {
+  node.textContent = msg;
+  node.className = "status show " + type;
+}
+function hideStatus(node) {
+  node.className = "status";
+}
+
+el("btnBuscar").addEventListener("click", async () => {
+  const url = el("urlInput").value.trim();
+  const status = el("statusBusca");
+  if (!url) { showStatus(status, "Cole um link do anuncio primeiro.", "error"); return; }
+
+  el("btnBuscar").disabled = true;
+  el("btnBuscar").textContent = "Buscando...";
+  hideStatus(status);
+
+  try {
+    const res = await fetch(API_BASE + "/api/extrair", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Falha na busca.");
+
+    if (data.nota !== null && data.nota !== undefined) el("nota").value = data.nota;
+    if (data.num_avaliacoes !== null && data.num_avaliacoes !== undefined) el("numAvaliacoes").value = data.num_avaliacoes;
+    if (data.descricao) el("descricao").value = data.descricao;
+    if (data.fotos) el("numFotos").value = data.fotos.length;
+    if (data.categorias) {
+      const map = { limpeza: "cat_limpeza", exatidao: "cat_exatidao", checkin: "cat_checkin", comunicacao: "cat_comunicacao", localizacao: "cat_localizacao", custo_beneficio: "cat_custo_beneficio" };
+      Object.entries(data.categorias).forEach(([k, v]) => { if (map[k] && el(map[k])) el(map[k]).value = v; });
+    }
+
+    if (data.titulo || (data.fotos && data.fotos.length)) {
+      el("topoAnuncio").style.display = "block";
+      el("tituloAnuncio").textContent = data.titulo || "(titulo nao identificado)";
+      if (data.fotos && data.fotos.length) {
+        el("fotoPrincipal").src = data.fotos[0];
+        el("fotoPrincipal").style.display = "block";
+      } else {
+        el("fotoPrincipal").style.display = "none";
+      }
+    }
+
+    window.__tituloAtual = data.titulo || "";
+    window.__origemFotos = "automatico";
+    window.__fotosURLs = Array.isArray(data.fotos) ? data.fotos : [];
+    showStatus(status, "Busca concluida. Confira os campos abaixo antes de analisar.", "ok");
+  } catch (err) {
+    window.__origemFotos = "manual";
+    window.__fotosURLs = [];
+    showStatus(status, "Nao foi possivel buscar automaticamente (" + err.message + "). Preencha os campos manualmente abaixo.", "error");
+  } finally {
+    el("btnBuscar").disabled = false;
+    el("btnBuscar").textContent = "Buscar automaticamente";
+  }
+});
+
+el("btnSugerirTitulos").addEventListener("click", async () => {
+  const status = el("statusTitulos");
+  const resultado = el("resultadoTitulos");
+  const btn = el("btnSugerirTitulos");
+
+  btn.disabled = true;
+  btn.textContent = "Gerando ideias...";
+  showStatus(status, "Pedindo sugestoes para a IA...", "ok");
+  resultado.innerHTML = "";
+
+  try {
+    const res = await fetch(API_BASE + "/api/sugerir-titulos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tituloAtual: window.__tituloAtual || "",
+        descricao: el("descricao").value || "",
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Falha ao gerar sugestoes.");
+
+    hideStatus(status);
+    let html = "<ul class='pontos'>";
+    (data.titulos || []).forEach((t) => {
+      const tam = t.length;
+      const corTamanho = tam > 50 ? "var(--bad)" : "var(--text-dim)";
+      html += `<li class="bom">${t} <span style="color:${corTamanho}; font-size:12px;">(${tam}/50)</span></li>`;
+    });
+    html += "</ul>";
+    resultado.innerHTML = html;
+  } catch (err) {
+    showStatus(status, "Erro: " + err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Dê ideias de títulos melhores (até 50 caracteres)";
+  }
+});
+
+el("btnAnalisar").addEventListener("click", async () => {
+  const status = el("statusAnalise");
+  hideStatus(status);
+
+  const categorias = {};
+  const catFields = { limpeza: "cat_limpeza", exatidao: "cat_exatidao", checkin: "cat_checkin", comunicacao: "cat_comunicacao", localizacao: "cat_localizacao", custo_beneficio: "cat_custo_beneficio" };
+  Object.entries(catFields).forEach(([key, id]) => {
+    const v = el(id).value.trim();
+    if (v) categorias[key] = parseFloat(v.replace(",", "."));
+  });
+
+  const body = {
+    nota: el("nota").value.trim(),
+    num_avaliacoes: el("numAvaliacoes").value.trim(),
+    num_fotos: el("numFotos").value.trim(),
+    descricao: el("descricao").value,
+    categorias: Object.keys(categorias).length ? categorias : null,
+    meta: el("meta").value.trim() || "4.85",
+    origemFotos: window.__origemFotos || "manual",
+  };
+
+  if (!body.nota || !body.num_avaliacoes) {
+    showStatus(status, "Preencha ao menos a nota geral e o numero de avaliacoes para calcular a meta.", "error");
+  }
+
+  el("btnAnalisar").disabled = true;
+  el("btnAnalisar").textContent = "Analisando...";
+
+  try {
+    const res = await fetch(API_BASE + "/api/diagnosticar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Falha ao gerar diagnostico.");
+    renderResultados(data);
+    el("resultados").style.display = "block";
+    el("resultados").scrollIntoView({ behavior: "smooth" });
+  } catch (err) {
+    showStatus(status, "Erro: " + err.message, "error");
+  } finally {
+    el("btnAnalisar").disabled = false;
+    el("btnAnalisar").textContent = "Analisar";
+  }
+});
+
+function listaPontos(pontosFortes, pontosAMelhorar) {
+  let html = "<ul class='pontos'>";
+  (pontosFortes || []).forEach((p) => (html += `<li class="bom">${p}</li>`));
+  (pontosAMelhorar || []).forEach((p) => (html += `<li class="melhorar">${p}</li>`));
+  html += "</ul>";
+  if (!(pontosFortes || []).length && !(pontosAMelhorar || []).length) {
+    html = "<div class='hint'>Sem dados suficientes para essa parte.</div>";
+  }
+  return html;
+}
+
+function renderResultados(data) {
+  // Avaliacoes necessarias
+  const av = data.avaliacoes_necessarias;
+  let avHtml = "";
+  if (!av) {
+    avHtml = "<div class='hint'>Preencha nota geral e numero de avaliacoes para calcular.</div>";
+  } else if (av.jaAtingiu) {
+    avHtml = `<div class="metric"><span class="num">0</span><span class="label">avaliacoes 5 estrelas necessarias, a nota atual (${av.notaAtual}) ja atinge a meta de ${av.meta}.</span></div>`;
+  } else {
+    avHtml = `<div class="metric"><span class="num">${av.necessarias}</span><span class="label">avaliacoes seguidas com nota 5 para chegar a ${av.meta} (estimativa final: ${av.notaFinalEstimada})</span></div>
+    <div class="hint">Conta assumindo que as proximas ${av.necessarias} avaliacoes vem todas com nota maxima (5) e nenhuma avaliacao antiga muda. E o cenario mais otimista possivel.</div>`;
+  }
+  el("blocoAvaliacoes").innerHTML = avHtml;
+
+  // Calculadora de impacto: permite simular o efeito de uma proxima
+  // avaliacao com nota mais baixa (ou qualquer nota) na media geral.
+  const calcHtml = `
+    <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--border);">
+      <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Calculadora: e se a proxima avaliacao vier com nota baixa?</div>
+      <div class="row" style="align-items:flex-end;">
+        <div style="flex:1; min-width:120px;">
+          <label for="notaHipotetica" style="margin-top:0;">Nota da proxima avaliacao</label>
+          <input type="number" id="notaHipotetica" min="1" max="5" step="1" value="3" />
+        </div>
+        <button id="btnCalcularImpacto" type="button">Calcular impacto</button>
+      </div>
+      <div id="resultadoImpacto" style="margin-top:10px;"></div>
+    </div>`;
+  el("blocoAvaliacoes").insertAdjacentHTML("beforeend", calcHtml);
+  el("btnCalcularImpacto").addEventListener("click", calcularImpactoAvaliacao);
+
+  // Descricao, por secao
+  const d = data.descricao;
+  let descHtml = "";
+  const ordemSecoes = ["descricao_anuncio", "sua_propriedade", "acesso_hospede", "interacao_hospedes", "outras_informacoes"];
+  ordemSecoes.forEach((chave) => {
+    const secao = d.secoes[chave];
+    const nome = d.nomesSecoes[chave];
+    descHtml += `<div style="margin-bottom:18px;">
+      <div style="font-weight:700; font-size:14px; margin-bottom:6px;">${nome}</div>
+      ${listaPontos(secao.pontosFortes, secao.pontosAMelhorar)}
+    </div>`;
+  });
+  el("blocoDescricao").innerHTML = descHtml;
+
+  // Fotos
+  const f = data.fotos;
+  let fotosHtml = listaPontos(f.pontosFortes, f.pontosAMelhorar);
+
+  if (window.__fotosURLs && window.__fotosURLs.length) {
+    fotosHtml += `
+      <div style="margin-top:16px;">
+        <button id="btnAnalisarFotos">Analisar fotos com IA (Gemini, gratis)</button>
+        <div class="hint" style="margin-top:8px;">Analisa uma foto por vez (o plano gratis do Gemini limita a velocidade). Para um anuncio com muitas fotos, pode levar varios minutos, e a cota gratuita as vezes acaba no meio do caminho, se isso acontecer, so tentar de novo mais tarde.</div>
+        <div id="statusFotosIA" class="status"></div>
+        <div id="resultadoFotosIA" style="margin-top:14px;"></div>
+      </div>`;
+  } else {
+    fotosHtml += `<div class="hint" style="margin-top:14px;">A analise por IA so funciona depois de uma busca automatica bem-sucedida (ela precisa dos links reais das fotos, preenchimento manual nao tem isso).</div>`;
+  }
+  el("blocoFotos").innerHTML = fotosHtml;
+
+  if (window.__fotosURLs && window.__fotosURLs.length) {
+    el("btnAnalisarFotos").addEventListener("click", analisarFotosComIA);
+  }
+
+  // Selo
+  const s = data.selo_preferido_hospedes;
+  let pillClass = "indefinido";
+  let pillTexto = "Dados insuficientes";
+  if (s.provavel_elegivel_pelos_criterios_publicos === true) { pillClass = "sim"; pillTexto = "Atende aos criterios publicos"; }
+  if (s.provavel_elegivel_pelos_criterios_publicos === false) { pillClass = "nao"; pillTexto = "Nao atende aos criterios publicos"; }
+
+  let seloHtml = `<span class="badge-pill ${pillClass}">${pillTexto}</span>`;
+  seloHtml += `<div class="criterio-linha"><span>Minimo de 5 avaliacoes</span><span class="val">${s.minimo_5_avaliacoes.valor_atual ?? "?"} avaliacoes ${s.minimo_5_avaliacoes.atende ? "(ok)" : "(abaixo do minimo)"}</span></div>`;
+
+  if (s.categorias_detalhe) {
+    Object.entries(s.categorias_detalhe).forEach(([k, v]) => {
+      let valTexto;
+      if (v.valor === null || v.valor === undefined) {
+        valTexto = "nao informado";
+      } else if (v.atende) {
+        valTexto = `${v.valor} (acima da referencia de ${v.referencia})`;
+      } else {
+        valTexto = `${v.valor} (abaixo da referencia informal de ${v.referencia})`;
+      }
+      seloHtml += `<div class="criterio-linha"><span>${k}</span><span class="val">${valTexto}</span></div>`;
+    });
+    seloHtml += `<div class="hint" style="margin-top:6px;">A "referencia" e um numero observado na pratica em anuncios com o selo, o Airbnb nao divulga o corte oficial por categoria.</div>`;
+  }
+
+  seloHtml += `<div class="hint" style="margin-top:14px;">${s.observacao}</div>`;
+  seloHtml += `<div style="margin-top:14px;"><strong style="font-size:13px;">Criterios oficiais do selo:</strong><ol class="oficiais">`;
+  s.criterios_oficiais.forEach((c) => (seloHtml += `<li>${c}</li>`));
+  seloHtml += `</ol></div>`;
+
+  el("blocoSelo").innerHTML = seloHtml;
+}
+
+function calcularImpactoAvaliacao() {
+  const paraNumero = (v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = parseFloat(String(v).trim().replace(",", "."));
+    return Number.isNaN(n) ? null : n;
+  };
+
+  const notaAtual = paraNumero(el("nota").value);
+  const numAvaliacoes = parseInt(el("numAvaliacoes").value, 10);
+  const meta = paraNumero(el("meta").value) ?? 4.85;
+  const notaHipotetica = paraNumero(el("notaHipotetica").value);
+  const resultado = el("resultadoImpacto");
+
+  if (notaAtual === null || Number.isNaN(numAvaliacoes) || notaHipotetica === null) {
+    resultado.innerHTML = "<div class='hint' style='color:var(--bad);'>Preencha nota geral, numero de avaliacoes (no topo) e a nota hipotetica para calcular.</div>";
+    return;
+  }
+  if (notaHipotetica < 1 || notaHipotetica > 5) {
+    resultado.innerHTML = "<div class='hint' style='color:var(--bad);'>A nota hipotetica precisa estar entre 1 e 5.</div>";
+    return;
+  }
+
+  const somaAtual = notaAtual * numAvaliacoes;
+  const novaSoma = somaAtual + notaHipotetica;
+  const novoN = numAvaliacoes + 1;
+  const novaMedia = novaSoma / novoN;
+
+  let html = `<div class="metric"><span class="num">${novaMedia.toFixed(2)}</span><span class="label">seria a nova nota geral se a proxima avaliacao vier com ${notaHipotetica} estrela${notaHipotetica == 1 ? "" : "s"} (de ${notaAtual} para ${novaMedia.toFixed(2)}).</span></div>`;
+
+  if (novaMedia >= meta) {
+    html += `<div class="hint">Mesmo assim, a nota continua batendo a meta de ${meta}.</div>`;
+  } else {
+    const xBruto = (meta * novoN - novaSoma) / (5 - meta);
+    const necessarias = Math.max(1, Math.ceil(xBruto - 1e-9));
+    const notaFinal = (novaSoma + 5 * necessarias) / (novoN + necessarias);
+    html += `<div class="hint">Depois disso, seriam necessarias <strong>${necessarias} avaliacoes seguidas com nota 5</strong> para voltar a bater a meta de ${meta} (chegaria a ${notaFinal.toFixed(2)}).</div>`;
+  }
+
+  resultado.innerHTML = html;
+}
+
+async function analisarFotosComIA() {
+  const btn = el("btnAnalisarFotos");
+  const status = el("statusFotosIA");
+  const resultado = el("resultadoFotosIA");
+
+  btn.disabled = true;
+  btn.textContent = "Analisando... (nao feche esta pagina)";
+  showStatus(status, "Enviando fotos para a IA, isso pode demorar um pouco.", "ok");
+  resultado.innerHTML = "";
+
+  try {
+    const res = await fetch(API_BASE + "/api/analisar-fotos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fotos: window.__fotosURLs }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Falha ao analisar as fotos.");
+
+    hideStatus(status);
+    let html = "";
+    data.resultados.forEach((r, i) => {
+      html += `<div class="card" style="margin-bottom:12px;">
+        <div style="display:flex; gap:14px; align-items:flex-start;">
+          <img src="${r.url}" style="width:110px; height:80px; object-fit:cover; border-radius:6px; flex-shrink:0;" />
+          <div>
+            <div class="hint" style="margin-bottom:4px;">Foto ${i + 1}</div>
+            ${r.analise ? `<div>${r.analise}</div>` : `<div style="color:var(--bad);">Nao foi possivel analisar: ${r.erro}</div>`}
+          </div>
+        </div>
+      </div>`;
+    });
+    if (data.total_disponivel > data.total_analisadas) {
+      html += `<div class="hint">Analisadas ${data.total_analisadas} de ${data.total_disponivel} fotos encontradas (limite de seguranca por rodada).</div>`;
+    }
+    if (data.cota_estourada) {
+      html += `<div class="hint" style="color:var(--bad); margin-top:6px;">A cota gratuita do Gemini foi atingida durante essa analise. Espere um pouco (a cota por minuto libera rapido; a cota diaria so libera no dia seguinte) e tente novamente para as fotos que faltaram.</div>`;
+    }
+    resultado.innerHTML = html;
+  } catch (err) {
+    showStatus(status, "Erro: " + err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Analisar fotos com IA (Gemini, gratis)";
+  }
+}
+</script>
+
+</body>
+</html>
