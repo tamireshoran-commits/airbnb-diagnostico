@@ -1,0 +1,71 @@
+COMO RODAR A FERRAMENTA "DIAGNOSTICO DE ANUNCIO AIRBNB"
+=========================================================
+
+Nao precisa digitar nenhum comando. So precisa dar duplo clique
+em dois arquivos, na ordem certa.
+
+PASSO 1 - Instalar o Node.js (so precisa fazer isso uma vez no PC)
+--------------------------------------------------------------------
+1. Va em https://nodejs.org
+2. Baixe a versao "LTS" (o botao maior, recomendado)
+3. Instale normalmente, clicando em "Avancar" ate o fim
+4. Reinicie o computador depois de instalar (evita problemas)
+
+PASSO 2 - Extrair a pasta
+--------------------------------------------------------------------
+1. Extraia (descompacte) o arquivo airbnb-diagnostico.zip em algum
+   lugar facil de achar, por exemplo dentro de Downloads mesmo
+2. Abra a pasta extraida, voce vai ver estes arquivos:
+   public, LEIA-ME, package.json, server, INICIAR, LIGAR
+
+PASSO 3 - Primeira vez: duplo clique em INICIAR
+--------------------------------------------------------------------
+1. De duplo clique no arquivo chamado "INICIAR" (ou "INICIAR.bat")
+2. Vai abrir uma janela preta. Isso e normal, deixe ela aberta
+3. Ela vai instalar tudo sozinha, pode demorar alguns minutos
+   (aparecem varias linhas de texto passando, isso e normal)
+4. Se o Windows perguntar algo tipo "Deseja permitir que este
+   aplicativo faca alteracoes?" ou mostrar um aviso azul do
+   "Windows protegeu seu PC", clique em "Mais informacoes" e depois
+   em "Executar assim mesmo" (o arquivo e seguro, fomos nos que
+   criamos ele)
+5. Quando aparecer a frase "Servidor rodando! Abra o navegador em:
+   http://localhost:3000", deu certo
+
+PASSO 4 - Usar a ferramenta
+--------------------------------------------------------------------
+1. NAO FECHE a janela preta, deixe ela aberta no fundo
+2. Abra o navegador normal (Chrome, Edge, etc)
+3. Va no endereco: http://localhost:3000
+4. Use normalmente, cole o link do anuncio e clique em
+   "Buscar automaticamente"
+
+DA PROXIMA VEZ QUE FOR USAR
+--------------------------------------------------------------------
+Nao precisa usar o "INICIAR" de novo (esse so instala as coisas
+uma vez). Da proxima vez, so:
+1. De duplo clique no arquivo "LIGAR" (ou "LIGAR.bat")
+2. Espere aparecer "Servidor rodando..."
+3. Abra http://localhost:3000 no navegador
+
+ANALISE DE FOTOS COM IA (Gemini, gratis)
+--------------------------------------------------------------------
+Depois de clicar em "Analisar", se a busca automatica tiver funcionado,
+vai aparecer um botao "Analisar fotos com IA (Gemini, gratis)" no
+bloco de Fotos. A chave ja esta configurada (arquivo .env), nao
+precisa fazer nada alem de clicar.
+
+Pode demorar 1-2 minutos (o plano gratis do Gemini limita a
+velocidade das analises, por isso ele espera um pouquinho entre
+cada foto). So funciona depois de uma busca automatica bem-sucedida,
+porque precisa dos links reais das fotos, preenchimento manual nao
+tem isso disponivel.
+
+SE DER ALGUM ERRO
+--------------------------------------------------------------------
+- Se a janela preta fechar sozinha rapido ou mostrar erro em
+  vermelho: tire um print da tela e mande para o Claude.
+- Se a busca automatica falhar para um anuncio especifico: o Airbnb
+  pode ter bloqueado aquela tentativa (isso acontece de vez em
+  quando). Preencha os campos manualmente, copiando e colando do
+  proprio anuncio, e clique em "Analisar" do mesmo jeito.
